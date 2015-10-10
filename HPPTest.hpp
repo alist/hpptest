@@ -12,7 +12,7 @@ struct ATestScope { //REGARDINGSCOPE
       rolling = whenCount + loopNumber;
   }
   ~ATestScope(){
-    printf("%s completed: %i WHENs\n", testName, whenCount);
+    printf("COMPLETED %s: %i WHENs\n", testName, whenCount);
   }
 };
 
