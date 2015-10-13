@@ -11,6 +11,20 @@ struct ATestScope { //REGARDINGSCOPE
       loopNumber++;
       rolling = whenCount + loopNumber;
   }
+  void failedRequire(const char* whenName, const char* thenName, const char * line, const char * condition) {
+    failedRequire(whenName, thenName, line, condition, 0);
+  }
+  void failedRequire(const char* whenName, const char* thenName, const char * line, const char * condition, const char *values) {
+    if ( lastErrdWhen != loopNumber ){
+      printf("REGARDING %s: Failed when #%i \nWHEN %s: \n", testName , loopNumber, whenName);
+      lastErrdWhen = loopNumber;
+    }
+    if (values != 0){
+      printf("THEN %s… FAILS line %s: %s. values: %s\n", thenName, line, condition, values );
+    } else {
+      printf("THEN %s… FAILS line %s: %s\n", thenName, line, condition );
+    }
+  }
   ~ATestScope(){
     printf("COMPLETED %s: %i WHENs\n", testName, whenCount);
   }
@@ -31,12 +45,10 @@ struct ATestScope { //REGARDINGSCOPE
 
 #define REQUIRE_LINE_TOO( Condition , Line ) \
     const char* _ATestREQUIRE##Line = #Condition; \
-    if (! ( Condition ) ) { \
-      if ( _ATestScope->lastErrdWhen != _ATestScope->loopNumber ){ \
-        printf("REGARDING %s: Failed when #%i \nWHEN %s: \n", _ATestScope->testName ,_ATestScope->loopNumber, _ATestWHEN); \
-        _ATestScope->lastErrdWhen = _ATestScope->loopNumber; \
-      } \
-      printf("THEN %s… FAILS line %s: %s\n", _ATestTHEN, #Line, _ATestREQUIRE##Line ); \
+    try { if (! ( Condition ) ) { \
+      _ATestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line); \
+    } } catch (...) { \
+      _ATestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line, "EXCEPTION" ); \
     }
 #define REQUIRE_LINE( Condition , Line ) REQUIRE_LINE_TOO( Condition, Line )
 #define REQUIRE( Condition ) REQUIRE_LINE( Condition, __LINE__ )
