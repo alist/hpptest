@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <memory>
 
-struct ATestScope { //REGARDINGSCOPE
+struct HPPTestScope {
   const char * testName;
   int whenCount;
   int loopNumber; //loop 0, get whenCount, then loop# becomes when#
@@ -25,20 +25,20 @@ struct ATestScope { //REGARDINGSCOPE
       printf("THEN %s… FAILS line %s: %s\n", thenName, line, condition );
     }
   }
-  ~ATestScope(){
+  ~HPPTestScope(){
     printf("COMPLETED %s: %i WHENs\n", testName, whenCount);
   }
 };
 
 //Major feature is variables/setup in REGARDING are repeated for each WHEN
 #define REGARDING( Name ) \
-    for (std::unique_ptr<ATestScope> _ATestScope(new ATestScope({ Name })) ; _ATestScope->loopNumber <= _ATestScope->whenCount ; _ATestScope->nextLoop())
+    for (std::unique_ptr<HPPTestScope> _HPPTestScope(new HPPTestScope({ Name })) ; _HPPTestScope->loopNumber <= _HPPTestScope->whenCount ; _HPPTestScope->nextLoop())
 
 #define WHEN( Name ) \
-    if (_ATestScope->loopNumber == 0) { _ATestScope->whenCount++; } \
-    _ATestScope->rolling--; \
+    if (_HPPTestScope->loopNumber == 0) { _HPPTestScope->whenCount++; } \
+    _HPPTestScope->rolling--; \
     /* following is an if then statement, expressed as !if else then… since can't scope condition and var assignment together in C */ \
-    if (!(_ATestScope->rolling == _ATestScope->whenCount)) {} else if ( const char* _ATestWHEN = Name )
+    if (!(_HPPTestScope->rolling == _HPPTestScope->whenCount)) {} else if ( const char* _ATestWHEN = Name )
 
 #define THEN( Name ) \
     if (const char* _ATestTHEN = Name )
@@ -46,9 +46,9 @@ struct ATestScope { //REGARDINGSCOPE
 #define REQUIRE_LINE_TOO( Condition , Line ) \
     const char* _ATestREQUIRE##Line = #Condition; \
     try { if (! ( Condition ) ) { \
-      _ATestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line); \
+      _HPPTestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line); \
     } } catch (...) { \
-      _ATestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line, "EXCEPTION" ); \
+      _HPPTestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line, "EXCEPTION" ); \
     }
 #define REQUIRE_LINE( Condition , Line ) REQUIRE_LINE_TOO( Condition, Line )
 #define REQUIRE( Condition ) REQUIRE_LINE( Condition, __LINE__ )
