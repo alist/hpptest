@@ -1,21 +1,31 @@
 #include <vector>
 #include "HPPTest.hpp"
 
-template <typename T> void testVec (void){
-  REGARDING("vectors") {
-    WHEN("instantiating a new vector"){
-      auto exVec = new std::vector<T>();
-      THEN("it should not be null") {
-        REQUIRE(exVec != 0);
+void runTest (void){
+  REGARDING("thing you're testing") {
+    auto vec = new std::vector<int>();
+    WHEN("doing this on first"){
+      vec->push_back(1);
+      THEN("it should look like this after") {
+        REQUIRE(vec->size() == 1);
+        REQUIRE(vec != 0); //multiple requires OK
       }
-      THEN("it should have size 0") {
-        REQUIRE(exVec->size() == 0);
+    }
+    WHEN("doing nothing second"){
+      THEN("it should look like this") {
+        REQUIRE(vec->size() == 0); //Each WHEN run seperately within REGARDING loop
+      }
+    }
+    WHEN("doing this thing third (that intentionally fails)"){
+      vec->pop_back();
+      THEN("it should look like this after") {
+        REQUIRE(vec->size() == 0, (long int) vec->size()); //variadic endings printed
       }
     }
   }
 }
 
 int main(void) {
-  testVec<char>();
+  runTest();
   return 0;
 }

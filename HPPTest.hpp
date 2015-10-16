@@ -1,4 +1,6 @@
 #include <cstdio>
+#include <iostream>
+#include <cstring>
 #include <memory>
 
 struct HPPTestScope {
@@ -14,16 +16,33 @@ struct HPPTestScope {
   void failedRequire(const char* whenName, const char* thenName, const char * line, const char * condition) {
     failedRequire(whenName, thenName, line, condition, 0);
   }
-  void failedRequire(const char* whenName, const char* thenName, const char * line, const char * condition, const char *values) {
+  template <typename ... Values> void failedRequire(const char* whenName, const char* thenName, const char * line, const char * condition, const char *valueNames, Values ... values) {
     if ( lastErrdWhen != loopNumber ){
       printf("REGARDING %s: Failed when #%i \nWHEN %s: \n", testName , loopNumber, whenName);
       lastErrdWhen = loopNumber;
     }
-    if (values != 0){
-      printf("THEN %s… FAILS line %s: %s. values: %s\n", thenName, line, condition, values );
+    if (valueNames != 0 && valueNames[0] != 0){
+      printf("THEN %s… FAILS line %s: %s. values: ", thenName, line, condition);
+      printVars(valueNames, values...);
     } else {
       printf("THEN %s… FAILS line %s: %s\n", thenName, line, condition );
     }
+  }
+  void printVars(const char * names) const{
+    std::cout << "\n";
+  }
+  template <typename T, typename ... More> void printVars (const char* names, T print, More... more) const {
+    const char * nextNames = strchr(names, ',');
+    for (const char * printChar = names; printChar != nextNames && *printChar != 0 ; printChar++){
+      if (*printChar == ' ') continue;
+      std::cout << *printChar;
+    }
+    std::cout << " = " << print;
+    if (nextNames != 0){
+      std::cout << ", ";
+      nextNames++;
+    }
+    printVars(nextNames, more...);
   }
   ~HPPTestScope(){
     printf("COMPLETED %s: %i WHENs\n", testName, whenCount);
@@ -43,12 +62,12 @@ struct HPPTestScope {
 #define THEN( Name ) \
     if (const char* _ATestTHEN = Name )
 
-#define REQUIRE_LINE_TOO( Condition , Line ) \
+#define REQUIRE_LINE_TOO( Condition , Line, vars... ) \
     const char* _ATestREQUIRE##Line = #Condition; \
     try { if (! ( Condition ) ) { \
-      _HPPTestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line); \
+      _HPPTestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line, #vars, ##vars ); \
     } } catch (...) { \
-      _HPPTestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line, "EXCEPTION" ); \
+      _HPPTestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line, "EXCEPTION", "TRUE" ); \
     }
-#define REQUIRE_LINE( Condition , Line ) REQUIRE_LINE_TOO( Condition, Line )
-#define REQUIRE( Condition ) REQUIRE_LINE( Condition, __LINE__ )
+#define REQUIRE_LINE( Condition , Line, vars... ) REQUIRE_LINE_TOO( Condition, Line , ##vars )
+#define REQUIRE(Condition, vars... ) REQUIRE_LINE( Condition, __LINE__ , ##vars )
