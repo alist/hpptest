@@ -10,6 +10,7 @@ struct HPPTestScope {
   int rolling{0}; ///keeps track of which WHEN to execute
   int lastErrdWhen{0}; //to stop over sharing
   int thenCount{0};
+  bool thenLatch{false}; //only one then pass per thenLatch
   int thenPassCount{0};
   void nextLoop() {
       loopNumber++;
@@ -63,13 +64,14 @@ struct HPPTestScope {
 
 #define THEN( Name ) \
     _HPPTestScope->thenCount++; \
+    _HPPTestScope->thenLatch = true; \
     if (const char* _ATestTHEN = Name )
 
 #define REQUIRE_LINE_TOO( Condition , Line, vars... ) \
     const char* _ATestREQUIRE##Line = #Condition; \
     try { if (! ( Condition ) ) { \
       _HPPTestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line, #vars, ##vars ); \
-    } else { _HPPTestScope->thenPassCount++; } } catch (...) { \
+    } else { if (_HPPTestScope->thenLatch) _HPPTestScope->thenPassCount++; _HPPTestScope->thenLatch = false; } } catch (...) { \
       _HPPTestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line, "EXCEPTION", "TRUE" ); \
     }
 #define REQUIRE_LINE( Condition , Line, vars... ) REQUIRE_LINE_TOO( Condition, Line , ##vars )
