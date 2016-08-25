@@ -16,7 +16,7 @@ struct HPPTestScope {
   void failedRequire(const char* whenName, const char* thenName, const char * line, const char * condition) {
     failedRequire(whenName, thenName, line, condition, 0);
   }
-  template <typename ... Values> void failedRequire(const char* whenName, const char* thenName, const char * line, const char * condition, const char *valueNames, Values ... values) {
+  template <typename ... Values> void failedRequire(const char* whenName, const char* thenName, const char * line, const char * condition, const char *valueNames, const Values & ... values) {
     if ( lastErrdWhen != loopNumber ){
       printf("REGARDING %s: Failed when #%i \nWHEN %s: \n", testName , loopNumber, whenName);
       lastErrdWhen = loopNumber;
@@ -31,7 +31,7 @@ struct HPPTestScope {
   void printVars(const char * names) const{
     std::cout << "\n";
   }
-  template <typename T, typename ... More> void printVars (const char* names, T print, More... more) const {
+  template <typename T, typename ... More> void printVars (const char* names, const T& print, const More & ... more) const {
     const char * nextNames = strchr(names, ',');
     for (const char * printChar = names; printChar != nextNames && *printChar != 0 ; printChar++){
       if (*printChar == ' ') continue;
