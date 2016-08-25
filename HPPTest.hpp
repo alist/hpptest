@@ -5,10 +5,12 @@
 
 struct HPPTestScope {
   const char * testName;
-  int whenCount;
-  int loopNumber; //loop 0, get whenCount, then loop# becomes when#
-  int rolling; //keeps track of which WHEN to execute
-  int lastErrdWhen; //to stop over sharing
+  int whenCount{0};
+  int loopNumber{0}; //loop 0, get whenCount, then loop# becomes when#
+  int rolling{0}; ///keeps track of which WHEN to execute
+  int lastErrdWhen{0}; //to stop over sharing
+  int thenCount{0};
+  int thenPassCount{0};
   void nextLoop() {
       loopNumber++;
       rolling = whenCount + loopNumber;
@@ -45,7 +47,7 @@ struct HPPTestScope {
     printVars(nextNames, more...);
   }
   ~HPPTestScope(){
-    printf("COMPLETED %s: %i WHENs\n", testName, whenCount);
+    printf("COMPLETED %s: %i WHENs. Passing %i of %i THENs. \n", testName, whenCount, thenPassCount, thenCount);
   }
 };
 
@@ -60,13 +62,14 @@ struct HPPTestScope {
     if (!(_HPPTestScope->rolling == _HPPTestScope->whenCount)) {} else if ( const char* _ATestWHEN = Name )
 
 #define THEN( Name ) \
+    _HPPTestScope->thenCount++; \
     if (const char* _ATestTHEN = Name )
 
 #define REQUIRE_LINE_TOO( Condition , Line, vars... ) \
     const char* _ATestREQUIRE##Line = #Condition; \
     try { if (! ( Condition ) ) { \
       _HPPTestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line, #vars, ##vars ); \
-    } } catch (...) { \
+    } else { _HPPTestScope->thenPassCount++; } } catch (...) { \
       _HPPTestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line, "EXCEPTION", "TRUE" ); \
     }
 #define REQUIRE_LINE( Condition , Line, vars... ) REQUIRE_LINE_TOO( Condition, Line , ##vars )
