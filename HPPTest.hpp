@@ -3,6 +3,9 @@
 #include <cstring>
 #include <memory>
 
+#define REQUIRE ASSERT
+#define REGARDING GIVEN
+
 struct HPPTestScope {
   const char * testName;
   int whenCount{0};
@@ -20,7 +23,7 @@ struct HPPTestScope {
   }
   template <typename ... Values> void failedRequire(const char* whenName, const char* thenName, const char * line, const char * condition, const char *valueNames, const Values & ... values) {
     if ( lastErrdWhen != loopNumber ){
-      printf("REGARDING %s: Failed when #%i \nWHEN %s: \n", testName , loopNumber, whenName);
+      printf("GIVEN %s: Failed when #%i \nWHEN %s: \n", testName , loopNumber, whenName);
       lastErrdWhen = loopNumber;
     }
     if (valueNames != 0 && valueNames[0] != 0){
@@ -63,8 +66,8 @@ struct HPPTestThenHelper {
   }
 };
 
-//Major feature is variables/setup in REGARDING are repeated for each WHEN
-#define REGARDING( Name ) \
+//Major feature is variables/setup in GIVEN are repeated for each WHEN
+#define GIVEN( Name ) \
     for (std::shared_ptr<HPPTestScope> _HPPTestScope(new HPPTestScope({ Name })) ; _HPPTestScope->loopNumber <= _HPPTestScope->whenCount ; _HPPTestScope->nextLoop())
 
 #define WHEN( Name ) \
@@ -77,14 +80,14 @@ struct HPPTestThenHelper {
     _HPPTestScope->thenCount++; \
     if ( HPPTestThenHelper _HPPTestThenHelper{_HPPTestScope, Name } )
 
-#define REQUIRE_LINE_TOO( Condition , Line, vars... ) \
-    const char* _ATestREQUIRE##Line = #Condition; \
+#define ASSERT_LINE_TOO( Condition , Line, vars... ) \
+    const char* _ATestASSERT##Line = #Condition; \
     try { if (! ( Condition ) ) { \
       _HPPTestThenHelper.failed = true; \
-      _HPPTestScope->failedRequire(_ATestWHEN, _HPPTestThenHelper.thenName, #Line, _ATestREQUIRE##Line, #vars, ##vars ); \
+      _HPPTestScope->failedRequire(_ATestWHEN, _HPPTestThenHelper.thenName, #Line, _ATestASSERT##Line, #vars, ##vars ); \
     }} catch (...) { \
       _HPPTestThenHelper.failed = true; \
-      _HPPTestScope->failedRequire(_ATestWHEN, _HPPTestThenHelper.thenName, #Line, _ATestREQUIRE##Line, "EXCEPTION", "TRUE" ); \
+      _HPPTestScope->failedRequire(_ATestWHEN, _HPPTestThenHelper.thenName, #Line, _ATestASSERT##Line, "EXCEPTION", "TRUE" ); \
     }
-#define REQUIRE_LINE( Condition , Line, vars... ) REQUIRE_LINE_TOO( Condition, Line , ##vars )
-#define REQUIRE(Condition, vars... ) REQUIRE_LINE( Condition, __LINE__ , ##vars )
+#define ASSERT_LINE( Condition , Line, vars... ) ASSERT_LINE_TOO( Condition, Line , ##vars )
+#define ASSERT(Condition, vars... ) ASSERT_LINE( Condition, __LINE__ , ##vars )

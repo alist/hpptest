@@ -7,19 +7,19 @@ void runTest (void){
     WHEN("doing this on first"){
       vec->push_back(1);
       THEN("it should look like this after") {
-        REQUIRE(vec->size() == 1);
-        REQUIRE(vec != 0); //multiple requires OK
+        ASSERT(vec->size() == 1);
+        ASSERT(vec != 0); //multiple requires OK
       }
     }
     WHEN("doing nothing second"){
       THEN("it should look like this") {
-        REQUIRE(vec->size() == 0); //Each WHEN run seperately within REGARDING loop
+        ASSERT(vec->size() == 0); //Each WHEN run seperately within REGARDING loop
       }
     }
     WHEN("doing this thing third (that intentionally fails)"){
       vec->pop_back();
       THEN("it should look like this after") {
-        REQUIRE(vec->size() == 0, (long int) vec->size()); //variadic endings printed
+        ASSERT(vec->size() == 0, (long int) vec->size()); //variadic endings printed
       }
     }
   }
