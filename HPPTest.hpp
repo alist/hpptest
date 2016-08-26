@@ -10,7 +10,6 @@ struct HPPTestScope {
   int rolling{0}; ///keeps track of which WHEN to execute
   int lastErrdWhen{0}; //to stop over sharing
   int thenCount{0};
-  bool thenLatch{false}; //only one then pass per thenLatch
   int thenPassCount{0};
   void nextLoop() {
       loopNumber++;
@@ -52,9 +51,21 @@ struct HPPTestScope {
   }
 };
 
+struct HPPTestThenHelper {
+  std::shared_ptr<HPPTestScope> testScope{nullptr};
+  const char * thenName{NULL};
+  bool failed{false};
+  operator bool() const { return true; }
+  ~HPPTestThenHelper(){
+    if (testScope && !failed){
+      testScope->thenPassCount++;
+    }
+  }
+};
+
 //Major feature is variables/setup in REGARDING are repeated for each WHEN
 #define REGARDING( Name ) \
-    for (std::unique_ptr<HPPTestScope> _HPPTestScope(new HPPTestScope({ Name })) ; _HPPTestScope->loopNumber <= _HPPTestScope->whenCount ; _HPPTestScope->nextLoop())
+    for (std::shared_ptr<HPPTestScope> _HPPTestScope(new HPPTestScope({ Name })) ; _HPPTestScope->loopNumber <= _HPPTestScope->whenCount ; _HPPTestScope->nextLoop())
 
 #define WHEN( Name ) \
     if (_HPPTestScope->loopNumber == 0) { _HPPTestScope->whenCount++; } \
@@ -64,15 +75,16 @@ struct HPPTestScope {
 
 #define THEN( Name ) \
     _HPPTestScope->thenCount++; \
-    _HPPTestScope->thenLatch = true; \
-    if (const char* _ATestTHEN = Name )
+    if ( HPPTestThenHelper _HPPTestThenHelper{_HPPTestScope, Name } )
 
 #define REQUIRE_LINE_TOO( Condition , Line, vars... ) \
     const char* _ATestREQUIRE##Line = #Condition; \
     try { if (! ( Condition ) ) { \
-      _HPPTestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line, #vars, ##vars ); \
-    } else { if (_HPPTestScope->thenLatch) _HPPTestScope->thenPassCount++; _HPPTestScope->thenLatch = false; } } catch (...) { \
-      _HPPTestScope->failedRequire(_ATestWHEN, _ATestTHEN, #Line, _ATestREQUIRE##Line, "EXCEPTION", "TRUE" ); \
+      _HPPTestThenHelper.failed = true; \
+      _HPPTestScope->failedRequire(_ATestWHEN, _HPPTestThenHelper.thenName, #Line, _ATestREQUIRE##Line, #vars, ##vars ); \
+    }} catch (...) { \
+      _HPPTestThenHelper.failed = true; \
+      _HPPTestScope->failedRequire(_ATestWHEN, _HPPTestThenHelper.thenName, #Line, _ATestREQUIRE##Line, "EXCEPTION", "TRUE" ); \
     }
 #define REQUIRE_LINE( Condition , Line, vars... ) REQUIRE_LINE_TOO( Condition, Line , ##vars )
 #define REQUIRE(Condition, vars... ) REQUIRE_LINE( Condition, __LINE__ , ##vars )
